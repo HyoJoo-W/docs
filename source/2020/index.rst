@@ -4,7 +4,7 @@
 .. toctree::
    :maxdepth: 2
 
-   spring/spring
-   summer/summer
-   autumn/autumn
-   winter/winter
+   spring/contents 
+   summer/contents
+   autumn/contents
+   winter/contents
