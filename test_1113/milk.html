@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>从夯到拉 · 牛奶锐评</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+body{background:#111;color:#fff;padding:14px;padding-bottom:120px}
+.title{text-align:center;font-size:22px;font-weight:bold;margin-bottom:16px;color:#fff}
+.tier{margin-bottom:10px;border-radius:8px;overflow:hidden;display:flex;min-height:56px}
+.tier-label{width:80px;display:flex;align-items:center;justify-content:center;font-weight:bold;font-size:17px}
+.tier-items{flex:1;background:#222;padding:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.item-tag{background:#333;padding:4px 8px;border-radius:4px;font-size:14px;display:flex;gap:4px;align-items:center}
+.item-tag .del{color:#ff6666;margin-left:4px;cursor:pointer}
+/* 五个等级颜色 */
+.tier-hang .tier-label{background:#ff4444}
+.tier-top .tier-label{background:#ff9922}
+.tier-good .tier-label{background:#ffdd22;color:#111}
+.tier-npc .tier-label{background:#888888}
+.tier-la .tier-label{background:#444444}
+
+.add-card{margin:24px 0;background:#222;padding:14px;border-radius:10px}
+.add-card h3{margin-bottom:10px;font-size:16px}
+.row{margin-bottom:10px}
+label{display:block;font-size:14px;margin-bottom:4px;color:#ccc}
+input,select,textarea{width:100%;padding:10px;border-radius:6px;border:none;font-size:16px;background:#333;color:#fff}
+textarea{min-height:70px;resize:vertical}
+.btns{display:flex;gap:10px;margin-top:12px}
+button{flex:1;padding:11px;border:none;border-radius:6px;font-size:16px;font-weight:bold;cursor:pointer}
+.btn-add{background:#27ae60;color:#fff}
+.btn-clear{background:#555;color:#fff}
+.btn-preview{background:#2980b9;color:#fff}
+.remark{margin-top:12px;color:#aaa;font-size:13px;line-height:1.5}
+#previewBox{display:none;background:#111;padding:16px;border-radius:10px;margin-top:16px}
+#previewBox .title{font-size:24px;margin-bottom:20px}
+</style>
+</head>
+<body>
+<div class="title">从夯到拉｜牛奶口味锐评</div>
+
+<div id="listWrap">
+  <div class="tier tier-hang" data-tier="夯">
+    <div class="tier-label">夯</div>
+    <div class="tier-items"></div>
+  </div>
+  <div class="tier tier-top" data-tier="顶级">
+    <div class="tier-label">顶级</div>
+    <div class="tier-items"></div>
+  </div>
+  <div class="tier tier-good" data-tier="人上人">
+    <div class="tier-label">人上人</div>
+    <div class="tier-items"></div>
+  </div>
+  <div class="tier tier-npc" data-tier="NPC">
+    <div class="tier-label">NPC</div>
+    <div class="tier-items"></div>
+  </div>
+  <div class="tier tier-la" data-tier="拉完了">
+    <div class="tier-label">拉完了</div>
+    <div class="tier-items"></div>
+  </div>
+</div>
+
+<div class="add-card">
+  <h3>➕ 添加一款牛奶锐评</h3>
+  <div class="row">
+    <label>牛奶名称（口味）</label>
+    <input id="milkName" placeholder="例如：草莓甜牛奶、纯牛奶、巧克力奶">
+  </div>
+  <div class="row">
+    <label>档位</label>
+    <select id="milkTier">
+      <option value="夯">夯</option>
+      <option value="顶级">顶级</option>
+      <option value="人上人">人上人</option>
+      <option value="NPC">NPC</option>
+      <option value="拉完了">拉完了</option>
+    </select>
+  </div>
+  <div class="row">
+    <label>锐评理由</label>
+    <textarea id="milkDesc" placeholder="写下你的评价，口感、甜度、腥不腥等"></textarea>
+  </div>
+  <div class="btns">
+    <button class="btn-add" onclick="addItem()">添加进去</button>
+    <button class="btn-preview" onclick="renderPreview()">预览榜单（截图用）</button>
+    <button class="btn-clear" onclick="clearAll()">清空全部</button>
+  </div>
+  <div class="remark">💡 数据保存在本机，换手机/清缓存会消失；做好直接截图，就是短视频同款从夯到拉表</div>
+</div>
+
+<div id="previewBox"></div>
+
+<script>
+const STORAGE_KEY = "milkTierList";
+let data = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+// 渲染主列表
+function renderList(){
+  document.querySelectorAll('.tier-items').forEach(el=>el.innerHTML='');
+  data.forEach((item,idx)=>{
+    const tierDom = document.querySelector(`.tier[data-tier="${item.tier}"] .tier-items`);
+    const tag = document.createElement('div');
+    tag.className='item-tag';
+    tag.innerHTML = `${item.name}<span class="del" onclick="delItem(${idx})">×</span>`;
+    tag.title = item.desc;
+    tierDom.appendChild(tag);
+  })
+}
+
+// 新增
+function addItem(){
+  const name = document.getElementById('milkName').value.trim();
+  const tier = document.getElementById('milkTier').value;
+  const desc = document.getElementById('milkDesc').value.trim();
+  if(!name){alert('请填写牛奶名称');return;}
+  data.push({name,tier,desc});
+  save();
+  renderList();
+  //清空输入框
+  document.getElementById('milkName').value='';
+  document.getElementById('milkDesc').value='';
+}
+
+// 删除单条
+function delItem(idx){
+  data.splice(idx,1);
+  save();
+  renderList();
+}
+
+// 保存本地
+function save(){
+  localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
+}
+
+// 全部清空
+function clearAll(){
+  if(!confirm('确定清空所有牛奶评价？'))return;
+  data=[];
+  save();
+  renderList();
+  document.getElementById('previewBox').style.display='none';
+}
+
+// 预览截图版
+function renderPreview(){
+  const wrap = document.getElementById('previewBox');
+  wrap.style.display='block';
+  const tierMap = ['夯','顶级','人上人','NPC','拉完了'];
+  const colorMap = {
+    "夯":"#ff4444",
+    "顶级":"#ff9922",
+    "人上人":"#ffdd22",
+    "NPC":"#888888",
+    "拉完了":"#444444"
+  }
+  let html = `<div class="title">从夯到拉 · 牛奶口味锐评</div>`;
+  tierMap.forEach(t=>{
+    const arr = data.filter(i=>i.tier===t);
+    html += `<div class="tier" style="margin-bottom:10px">
+      <div style="width:80px;background:${colorMap[t]};display:flex;align-items:center;justify-content:center;font-weight:bold;padding:10px">${t}</div>
+      <div style="flex:1;background:#222;padding:10px">
+        ${arr.map(x=>`<div style="padding:4px 0;border-bottom:1px solid #333">${x.name}<br><span style="font-size:13px;color:#bbb">${x.desc||'无评价'}</span></div>`).join('')}
+      </div>
+    </div>`
+  })
+  wrap.innerHTML = html;
+  wrap.scrollIntoView({behavior:'smooth'});
+}
+
+// 初始化
+renderList();
+</script>
+</body>
+</html>
